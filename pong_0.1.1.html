@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html lang = "pt-br">
+
+	<head>
+		<meta content="text/html;charset=utf-8"
+		http-equiv="Content-Type">
+		<meta content="utf-8" http-equiv="encoding">
+	</head>	
+
+	<canvas id = "pong" width="800" height="600"></canvas>
+
+    <script>
+		var canvas;
+		var canvasContext;
+		var ballx = 400;
+		var ballspeedx = 10;
+		var ballspeedy = 5;
+		var bally = 300;
+        var paddleHeight = 20;
+        var paddleWidth = 120;
+        var paddleX = 340;
+        var npcPaddleX = 400;
+        var npc_score = 0;
+        var player_score = 0;
+
+
+        const PADDLE_DIST_FROM_EDGE = 40;
+        const BOUNCE_EFFECT =0.25;
+        const NPC_STEP = 8;
+
+        var lastFrameTimeMs = 0;
+        var maxFPS = 60;
+        var timeStep = 1000/maxFPS;
+
+
+		window.onload = function(){
+			canvas = document.getElementById('pong');
+			canvasContext = canvas.getContext('2d');
+			var framesPerSecond = 40;
+			setInterval(function(){
+				move();
+				draw();
+			}, 1000/framesPerSecond);
+            canvas.addEventListener('mousemove',
+                function(evt){
+                    var mousePos = calculateMousePos(evt);
+                    paddleX = mousePos.x;
+                }
+            );
+		}
+
+        function mainLoop(timeStamp){
+            if (timeStamp < lastFrameTimeMs + timeStep){
+                requestAnimationFrame(mainLoop);
+                return;
+            }
+
+            lastFrameTimeMs = timeStamp;
+            move();
+            draw();
+            requestAnimationFrame(mainLoop);
+        }
+
+        
+		function move(){
+			ballx = ballx + ballspeedx;
+			bally = bally + ballspeedy;
+
+            npcMovement();
+
+            var paddleLeftEdgeX = paddleX - paddleWidth/2; 
+	    	var paddleRightEdgeX = paddleLeftEdgeX + paddleWidth;
+		    var paddleTopEdgeY = canvas.height - paddleHeight - PADDLE_DIST_FROM_EDGE;
+		    var paddleBottomEdgeY = paddleTopEdgeY + paddleHeight;
+            var npcPaddleLeftEdgeX = npcPaddleX - paddleWidth/2;
+            var npcPaddleRightEdgeX = npcPaddleLeftEdgeX + paddleWidth;
+            var npcPaddleTopEdgeY = PADDLE_DIST_FROM_EDGE;
+            var npcPaddleBottomEdgeY = npcPaddleTopEdgeY + paddleHeight;
+
+
+            if(bally > paddleTopEdgeY && 
+            bally < paddleBottomEdgeY && 
+            ballx > paddleLeftEdgeX && 
+            ballx < paddleRightEdgeX) 
+            {
+                var centerXpaddle = paddleX;
+                var distFromCenter = ballx - centerXpaddle;
+
+                ballspeedx = distFromCenter*BOUNCE_EFFECT;
+                ballspeedy *= - 1;
+            };
+
+
+            if(bally >npcPaddleTopEdgeY 
+            && bally < npcPaddleBottomEdgeY
+            && ballx > npcPaddleLeftEdgeX
+            && ballx < npcPaddleRightEdgeX){
+                var npcPaddleCenterX = npcPaddleX;
+                var distFromCenter = ballx - npcPaddleCenterX;
+
+                ballspeedx = distFromCenter*BOUNCE_EFFECT;
+                ballspeedy *= -1;
+            }
+
+
+            if(ballx <= 0) //left wall
+                ballspeedx = - ballspeedx;
+			if(ballx >= canvas.width) //right wall
+				ballspeedx = - ballspeedx;
+            if(bally <= 0){//top wall
+                bally = 300;
+                player_score = player_score + 1;
+            };               
+			if(bally >= canvas.height){ //bottom wall
+                //npc_score = npc_score + 1;
+                bally = 300;
+                npc_score = npc_score + 1;
+            };
+            if(npc_score > 5 || player_score > 5){
+                npc_score = 0;
+                player_score = 0;
+            };
+
+     
+		}
+
+		function draw(){
+			coloRect(0,0, canvas.width,canvas.height,'black'); 
+            coloCircle(ballx,bally,10,'#EF7627');
+            coloRect(paddleX - paddleWidth/2, canvas.height - paddleHeight - PADDLE_DIST_FROM_EDGE, paddleWidth, paddleHeight,'#A30262');
+            coloRect(npcPaddleX - paddleWidth/2, PADDLE_DIST_FROM_EDGE, paddleWidth, paddleHeight,'#D52D00');            
+            placar();           
+		}
+
+
+
+        function placar(){
+            canvasContext.font ="50px Arial"
+            canvasContext.textAlign = "center"
+            canvasContext.fillStyle = 'white';
+            canvasContext.fillText('PC'+'\n'+npc_score+'X'+player_score+'\n'+'P1',(canvas.width/2),canvas.height/2);
+            if(npc_score == 5 || player_score == 5){
+                canvasContext.fillText("GAME OVER",(canvas.width/2),(canvas.height/2)-50);
+                if(player_score == 5){
+                    canvasContext.fillText("PLAYER WINS!!",(canvas.width/2),(canvas.height/2)+60);
+                };
+                if(npc_score == 5) {
+                    canvasContext.fillText("PC WINS!!",(canvas.width/2),(canvas.height/2)+60);
+                };
+            };    
+        }
+
+
+
+        function coloRect(leftX, topY, width, height, drawColor){
+            canvasContext.fillStyle = drawColor;
+			canvasContext.fillRect(leftX,topY,width,height); 
+        }
+
+
+        function coloCircle(centerX,centerY,radius,drawColor){
+            canvasContext.fillStyle = drawColor
+            canvasContext.beginPath();
+            canvasContext.arc(centerX,centerY,radius,0,Math.PI*2,true);
+            canvasContext.fill();
+
+        }
+
+
+
+        function calculateMousePos(evt){
+            var rect = canvas.getBoundingClientRect();
+            var root = document.documentElement;
+            var mouseX = evt.clientX - rect.left - root.scrollLeft;
+            var mouseY = evt.clientY - rect.top - root.scrollTop;
+            return{
+                x:mouseX,
+                y:mouseY
+            };
+
+            
+        }
+
+        function npcMovement(){
+            if(npcPaddleX < ballx)
+                npcPaddleX += NPC_STEP;
+            else 
+                npcPaddleX -= NPC_STEP;
+        }
+
+
+	</script>
+</html>
