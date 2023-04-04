@@ -21,8 +21,8 @@
         var paddleWidth = 120;
         var paddleX = 340;
         var npcPaddleX = 400;
-        var npc_score = 0;
-        var player_score = 0;
+        var npcScore = 0;
+        var playerScore = 0;
 
 
         const PADDLE_DIST_FROM_EDGE = 40;
@@ -38,15 +38,18 @@
 			canvas = document.getElementById('pong');
 			canvasContext = canvas.getContext('2d');
 			var framesPerSecond = 40;
-			setInterval(function(){
+			var intervalId = setInterval(function(){
 				move();
 				draw();
+                if(npcScore == 5 || playerScore == 5){
+                  clearInterval(intervalId);
+                };
 			}, 1000/framesPerSecond);
             canvas.addEventListener('mousemove',
                 function(evt){
-                    var mousePos = calculateMousePos(evt);
-                    paddleX = mousePos.x;
-                }
+                var mousePos = calculateMousePos(evt);
+                paddleX = mousePos.x;
+            }
             );
 		}
 
@@ -110,26 +113,22 @@
 				ballspeedx = - ballspeedx;
             if(bally <= 0){//top wall
                 bally = 300;
-                player_score = player_score + 1;
+                playerScore = playerScore + 1;
             };               
 			if(bally >= canvas.height){ //bottom wall
                 //npc_score = npc_score + 1;
                 bally = 300;
-                npc_score = npc_score + 1;
-            };
-            if(npc_score > 5 || player_score > 5){
-                npc_score = 0;
-                player_score = 0;
+                npcScore = npcScore + 1;
             };
 
      
 		}
 
 		function draw(){
-			coloRect(0,0, canvas.width,canvas.height,'black'); 
-            coloCircle(ballx,bally,10,'#EF7627');
-            coloRect(paddleX - paddleWidth/2, canvas.height - paddleHeight - PADDLE_DIST_FROM_EDGE, paddleWidth, paddleHeight,'#A30262');
-            coloRect(npcPaddleX - paddleWidth/2, PADDLE_DIST_FROM_EDGE, paddleWidth, paddleHeight,'#D52D00');            
+			colorRect(0,0, canvas.width,canvas.height,'black'); 
+            colorCircle(ballx,bally,10,'#EF7627');
+            colorRect(paddleX - paddleWidth/2, canvas.height - paddleHeight - PADDLE_DIST_FROM_EDGE, paddleWidth, paddleHeight,'#A30262');
+            colorRect(npcPaddleX - paddleWidth/2, PADDLE_DIST_FROM_EDGE, paddleWidth, paddleHeight,'#D52D00');            
             placar();           
 		}
 
@@ -139,13 +138,13 @@
             canvasContext.font ="50px Arial"
             canvasContext.textAlign = "center"
             canvasContext.fillStyle = 'white';
-            canvasContext.fillText('PC'+'\n'+npc_score+'X'+player_score+'\n'+'P1',(canvas.width/2),canvas.height/2);
-            if(npc_score == 5 || player_score == 5){
+            canvasContext.fillText('PC'+'\n'+npcScore+'X'+playerScore+'\n'+'P1',(canvas.width/2),canvas.height/2);
+            if(npcScore == 5 || playerScore == 5){
                 canvasContext.fillText("GAME OVER",(canvas.width/2),(canvas.height/2)-50);
-                if(player_score == 5){
+                if(playerScore == 5){
                     canvasContext.fillText("PLAYER WINS!!",(canvas.width/2),(canvas.height/2)+60);
                 };
-                if(npc_score == 5) {
+                if(npcScore == 5) {
                     canvasContext.fillText("PC WINS!!",(canvas.width/2),(canvas.height/2)+60);
                 };
             };    
@@ -153,13 +152,13 @@
 
 
 
-        function coloRect(leftX, topY, width, height, drawColor){
+        function colorRect(leftX, topY, width, height, drawColor){
             canvasContext.fillStyle = drawColor;
 			canvasContext.fillRect(leftX,topY,width,height); 
         }
 
 
-        function coloCircle(centerX,centerY,radius,drawColor){
+        function colorCircle(centerX,centerY,radius,drawColor){
             canvasContext.fillStyle = drawColor
             canvasContext.beginPath();
             canvasContext.arc(centerX,centerY,radius,0,Math.PI*2,true);
